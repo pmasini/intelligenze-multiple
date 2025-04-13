@@ -1,0 +1,159 @@
+
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Classe - Intelligenze Multiple (Online)</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+            padding: 30px;
+            max-width: 1000px;
+            margin: auto;
+        }
+        h2 {
+            text-align: center;
+            color: #4a4a4a;
+        }
+        label, select {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        input[type="number"], input[type="text"], select {
+            width: 100%;
+            padding: 6px;
+            margin-top: 5px;
+            box-sizing: border-box;
+        }
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 1em;
+        }
+        .descrizione {
+            font-weight: normal;
+            font-size: 0.9em;
+            color: #666;
+        }
+        canvas {
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Profilo delle Intelligenze Multiple - Classe Online</h2>
+
+<label>Nome dello studente:
+    <input type="text" id="nomeStudente" placeholder="Inserisci il tuo nome">
+</label>
+
+<div id="formValori">
+    <label><b>Linguistica</b> <input type="number" min="1" max="10" value="5"></label>
+    <label><b>Logico-matematica</b> <input type="number" min="1" max="10" value="5"></label>
+    <label><b>Musicale</b> <input type="number" min="1" max="10" value="5"></label>
+    <label><b>Spaziale</b> <input type="number" min="1" max="10" value="5"></label>
+    <label><b>Corporeo-cinestetica</b> <input type="number" min="1" max="10" value="5"></label>
+    <label><b>Intrapersonale</b> <input type="number" min="1" max="10" value="5"></label>
+    <label><b>Interpersonale</b> <input type="number" min="1" max="10" value="5"></label>
+    <label><b>Naturalistica</b> <input type="number" min="1" max="10" value="5"></label>
+    <label><b>Esistenziale</b> <input type="number" min="1" max="10" value="5"></label>
+</div>
+
+<button onclick="salvaProfilo()">💾 Salva Profilo</button>
+<button onclick="mostraMedia()">📊 Mostra Media della Classe</button>
+
+<canvas id="graficoRadar" width="600" height="600"></canvas>
+
+<script>
+    const labels = [
+        "Linguistica", "Logico-matematica", "Musicale",
+        "Spaziale", "Corporeo-cinestetica", "Intrapersonale",
+        "Interpersonale", "Naturalistica", "Esistenziale"
+    ];
+
+    const ctx = document.getElementById('graficoRadar').getContext('2d');
+    const radarChart = new Chart(ctx, {
+        type: 'radar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Profilo Intelligenze',
+                backgroundColor: 'rgba(100, 149, 237, 0.2)',
+                borderColor: 'rgba(100, 149, 237, 1)',
+                pointBackgroundColor: 'rgba(100, 149, 237, 1)',
+                data: Array(9).fill(0)
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                r: {
+                    min: 0,
+                    max: 10,
+                    ticks: { stepSize: 1, color: '#666' },
+                    grid: { color: '#ddd' },
+                    pointLabels: { color: '#444' }
+                }
+            },
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+
+    async function salvaProfilo() {
+        const nome = document.getElementById("nomeStudente").value.trim();
+        const valori = Array.from(document.querySelectorAll('#formValori input')).map(x => parseInt(x.value));
+        if (!nome || valori.some(v => isNaN(v))) {
+            alert("Inserisci nome e tutti i valori da 1 a 10.");
+            return;
+        }
+
+        const payload = {
+            nome: nome,
+            valori: valori
+        };
+
+        await fetch("https://script.google.com/a/macros/polofermigiorgi.it/s/AKfycbz-hkLN_xGnPgL4Qh9A0JX2xnnONweY2XECb8cgezuNcCM4DejXIWvQiG8oxtFYLXKf/exec", {
+            method: "POST",
+            body: JSON.stringify(payload),
+            headers: {
+                "Content-Type": "application/json"
+            }
+        });
+
+        alert("Dati salvati!");
+    }
+
+    async function mostraMedia() {
+        const res = await fetch("https://script.google.com/a/macros/polofermigiorgi.it/s/AKfycbz-hkLN_xGnPgL4Qh9A0JX2xnnONweY2XECb8cgezuNcCM4DejXIWvQiG8oxtFYLXKf/exec");
+        const dati = await res.json();
+        const header = dati[0];
+        const righe = dati.slice(1);
+
+        if (righe.length === 0) {
+            alert("Nessun dato disponibile.");
+            return;
+        }
+
+        const somma = Array(9).fill(0);
+        righe.forEach(riga => {
+            for (let i = 1; i <= 9; i++) {
+                somma[i - 1] += parseFloat(riga[i]);
+            }
+        });
+        const media = somma.map(v => (v / righe.length).toFixed(2));
+
+        radarChart.data.datasets[0].label = "Media della classe";
+        radarChart.data.datasets[0].data = media;
+        radarChart.update();
+    }
+</script>
+
+</body>
+</html>
